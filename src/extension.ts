@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "my-local-llm" is now active!');
   
   const chatBoxViewProvider = new ChatBoxViewProvider(context.extensionUri);
-  const chatBoxWebView = vscode.window.registerWebviewViewProvider("llm-chat-box", chatBoxViewProvider)
+  const chatBoxWebView = vscode.window.registerWebviewViewProvider("llm-chat-box", chatBoxViewProvider);
 
 	context.subscriptions.push(chatBoxWebView);
 }

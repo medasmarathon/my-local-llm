@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { getNonce } from '../utils';
 export class ChatBoxViewProvider implements vscode.WebviewViewProvider {
   private logger: vscode.OutputChannel;
+  private webview?: vscode.Webview;
+  public static readonly viewType = 'local-chat-llm.chatBox';
   constructor(
 		private readonly _extensionUri: vscode.Uri,
   ) { 
@@ -18,9 +20,9 @@ export class ChatBoxViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
-				case 'colorSelected':
+				case 'insertSuggestedSnippet':
 					{
-						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
+						vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(data.value));
 						break;
 					}
 			}
@@ -30,6 +32,7 @@ export class ChatBoxViewProvider implements vscode.WebviewViewProvider {
   private _getHtmlForWebview(webview: vscode.Webview) {
 		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js'));
+		const chatLlmSettingsComponentUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'chat-llm-settings.js'));
 
 		// Do the same for the stylesheet.
 		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
@@ -43,12 +46,6 @@ export class ChatBoxViewProvider implements vscode.WebviewViewProvider {
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
-
-				<!--
-					Use a content security policy to only allow loading styles from our extension directory,
-					and only allow scripts that have a specific nonce.
-					(See the 'webview-sample' extension sample for img-src content security policy examples)
-				-->
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,12 +56,9 @@ export class ChatBoxViewProvider implements vscode.WebviewViewProvider {
 				<title>Chat Box</title>
 			</head>
 			<body>
-				<ul class="color-list">
-				</ul>
-
-				<button class="add-color-button">Add Color</button>
-
-				<script nonce="${nonce}" src="${scriptUri}"></script>
+        <div id="app"></div>
+				<script type="module" nonce="${nonce}" src="${chatLlmSettingsComponentUri}"></script>
+				<script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
 	}
